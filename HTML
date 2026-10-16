@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ritboom</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Biblioteca de animação de confetes -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+
+<body>
+
+    <div id="game-container">
+        <canvas id="drawing-canvas"></canvas>
+
+        <div id="hud-top">
+            <div>PONTOS: <span id="score">0</span> / 1000</div>
+            <button id="lightning-btn" onclick="triggerLightningBolt()">⚡ USAR RAIO (0)</button>
+        </div>
+
+        <div id="core">
+            <div id="core-inner">✍️</div>
+        </div>
+
+        <div id="hud-bottom">
+            <div class="life-label">DESENHE EM QUALQUER LUGAR LIVREMENTE</div>
+            <div id="health-bar-container">
+                <div class="life-block" id="life-1"></div>
+                <div class="life-block" id="life-2"></div>
+                <div class="life-block" id="life-3"></div>
+                <div class="life-block" id="life-4"></div>
+                <div class="life-block" id="life-5"></div>
+            </div>
+        </div>
+
+        <!-- Tela Inicial / Principal -->
+        <div id="start-screen" class="overlay">
+            <h1>RITBOOM</h1>
+            <p>
+                ⬆️ <b>Cima</b> | ⬇️ <b>Baixo</b> | ↗️ <b>Diagonal</b> | 🌀 <b>Espiral</b><br>
+                👁️ <b>Opacidade dos Inimigos (Combos):</b><br>
+                • <b>Totalmente visível:</b> Nenhum traço desenhado ainda.<br>
+                • <b>Meio transparente:</b> Falta o último traço.<br>
+                💣 <b>Bombas:</b> Acumulam cargas para o <b>Botão de Raio (⚡)</b> contra o Boss!<br>
+                🏆 <b>Chegue a 1000 pontos</b> para enfrentar o <u>Boss Final!</u>
+            </p>
+
+            <!-- Botões Principais: Jogar e Ajustar Volume -->
+            <div class="menu-buttons">
+                <button class="btn" onclick="startCountdown()">JOGAR</button>
+                <button class="btn btn-secondary" onclick="toggleVolumeModal()">AJUSTAR VOLUME</button>
+            </div>
+        </div>
+
+        <!-- Modal de Ajuste de Volume -->
+        <div id="volume-modal" class="overlay" style="display: none;">
+            <h1>AJUSTE DE VOLUME</h1>
+            <p>Defina o volume principal do som (Padrão: 50)</p>
+            <div class="volume-control-box">
+                <span id="volume-display">50</span>
+                <input type="range" id="volume-slider" min="0" max="100" value="50" oninput="updateVolume(this.value)">
+            </div>
+            <br>
+            <button class="btn" onclick="toggleVolumeModal()">VOLTAR</button>
+        </div>
+
+        <!-- Contagem Regressiva -->
+        <div id="countdown-screen" class="overlay" style="display: none;">
+            <div id="countdown-text">VAMOS</div>
+        </div>
+
+        <!-- Tela de Fim de Jogo -->
+        <div id="gameover-screen" class="overlay" style="display: none;">
+            <h1 id="end-title">FALHA NO SISTEMA!</h1>
+            <p><span id="end-message">Você perdeu toda a integridade.</span><br><br>
+                <span id="final-rank" style="font-size: 20px; color: #ffcc00; font-weight: bold;"></span>
+            </p>
+            <button class="btn" onclick="resetGame()">JOGAR NOVAMENTE</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
