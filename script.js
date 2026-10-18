@@ -654,13 +654,18 @@ function winGame() {
     if (bossEl) { bossEl.remove(); bossEl = null; }
     document.querySelectorAll('.virus, .heart-corner').forEach(v => v.remove());
 
-    endTitle.innerText = "SISTEMA SALVO! 🎉";
-    endMessage.innerText = "Você derrotou o Boss e restaurou a rede!";
+    endTitle.innerText = "SISTEMA SALVO!";
+    endMessage.innerText = "Você derrotou o Boss e restaurou o sistema com sucesso!";
     gameoverScreen.style.display = 'flex';
-    finalRankEl.innerText = `Pontuação Final: 1000`;
+    finalRankEl.innerText = `Pontuação Final: 0`;
+    animateFinalScore(score, "Pontuação Final");
 
     if (typeof confetti === 'function') {
-        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+        confetti({
+            particleCount: 150,
+            spread: 80,
+            origin: { y: 0.6 }
+        });
     }
 }
 
@@ -669,22 +674,22 @@ function resetGame() {
     startScreen.style.display = 'flex';
 }
 
-function triggerCorePulse() {
-    core.classList.add('pulse');
-    setTimeout(() => core.classList.remove('pulse'), 150);
-}
-
 function showFeedback(text, className) {
-    const fb = document.createElement('div');
+    let fb = document.createElement('div');
     fb.className = `rhythm-feedback ${className}`;
     fb.innerText = text;
     gameContainer.appendChild(fb);
     setTimeout(() => fb.remove(), 600);
 }
 
+function triggerCorePulse() {
+    core.classList.add('pulse');
+    setTimeout(() => core.classList.remove('pulse'), 100);
+}
+
 function createParticles(x, y) {
     for (let i = 0; i < 8; i++) {
-        const p = document.createElement('div');
+        let p = document.createElement('div');
         p.className = 'particle';
         p.style.left = `${x}px`;
         p.style.top = `${y}px`;
@@ -694,17 +699,21 @@ function createParticles(x, y) {
         let speed = Math.random() * 4 + 2;
         let vx = Math.cos(angle) * speed;
         let vy = Math.sin(angle) * speed;
-        let alpha = 1.0;
 
-        let anim = setInterval(() => {
-            let curLeft = parseFloat(p.style.left);
-            let curTop = parseFloat(p.style.top);
-            p.style.left = `${curLeft + vx}px`;
-            p.style.top = `${curTop + vy}px`;
+        let px = x;
+        let py = y;
+        let alpha = 1;
+
+        let pInterval = setInterval(() => {
+            px += vx;
+            py += vy;
             alpha -= 0.05;
+            p.style.left = `${px}px`;
+            p.style.top = `${py}px`;
             p.style.opacity = alpha;
+
             if (alpha <= 0) {
-                clearInterval(anim);
+                clearInterval(pInterval);
                 p.remove();
             }
         }, 20);
@@ -712,65 +721,70 @@ function createParticles(x, y) {
 }
 
 function updateGame() {
-    if (!gameActive && !isBossActive) return;
+    if (!gameActive) return;
 
     let centerX = window.innerWidth / 2;
     let centerY = window.innerHeight / 2;
 
-    // Atualiza vírus em direção ao núcleo
-    for (let i = viruses.length - 1; i >= 0; i--) {
-        let v = viruses[i];
-        let dx = centerX - v.x;
-        let dy = centerY - v.y;
-        let dist = Math.hypot(dx, dy);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        let currentSpeed = baseSpeed * v.speedMultiplier;
-        if (dist > 55) {
-            v.x += (dx / dist) * currentSpeed;
-            v.y += (dy / dist) * currentSpeed;
-            v.element.style.left = `${v.x}px`;
-            v.element.style.top = `${v.y}px`;
-        } else {
-            v.element.remove();
-            viruses.splice(i, 1);
-            loseLife();
+    // Desenhar traços ativos que desaparecem gradualmente
+    for (let i = activeFadePoints.length - 1; i >= 0; i--) {
+        let fade = activeFadePoints[i];
+        if (fade.points.length < 2) continue;
+
+        ctx.beginPath();
+        ctx.moveTo(fade.points[0].x, fade.points[0].y);
+        for (let j = 1; j < fade.points.length; j++) {
+            ctx.lineTo(fade.points[j].x, fade.points[j].y);
+        }
+        ctx.strokeStyle = `rgba(0, 255, 204, ${fade.alpha})`;
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.shadowColor = '#00ffcc';
+        ctx.shadowBlur = 10;
+        ctx.stroke();
+
+        fade.alpha -= 0.04;
+        if (fade.alpha <= 0) {
+            activeFadePoints.splice(i, 1);
         }
     }
 
-    // Desenha as linhas na tela do canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+    // Desenhar o traço atual do jogador em tempo real
     if (drawing && strokePoints.length > 1) {
         ctx.beginPath();
         ctx.moveTo(strokePoints[0].x, strokePoints[0].y);
         for (let i = 1; i < strokePoints.length; i++) {
             ctx.lineTo(strokePoints[i].x, strokePoints[i].y);
         }
-        ctx.strokeStyle = '#00ffcc';
-        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 5;
         ctx.lineCap = 'round';
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = '#00ffcc';
+        ctx.lineJoin = 'round';
+        ctx.shadowColor = '#ffffff';
+        ctx.shadowBlur = 15;
         ctx.stroke();
     }
 
-    for (let i = activeFadePoints.length - 1; i >= 0; i--) {
-        let fp = activeFadePoints[i];
-        ctx.beginPath();
-        ctx.moveTo(fp.points[0].x, fp.points[0].y);
-        for (let j = 1; j < fp.points.length; j++) {
-            ctx.lineTo(fp.points[j].x, fp.points[j].y);
-        }
-        ctx.strokeStyle = `rgba(0, 255, 204, ${fp.alpha})`;
-        ctx.lineWidth = 4;
-        ctx.lineCap = 'round';
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = `rgba(0, 255, 204, ${fp.alpha})`;
-        ctx.stroke();
+    // Atualizar e mover os vírus em direção ao centro
+    for (let i = viruses.length - 1; i >= 0; i--) {
+        let v = viruses[i];
+        let angle = Math.atan2(centerY - v.y, centerX - v.x);
+        let speed = baseSpeed * v.speedMultiplier;
 
-        fp.alpha -= 0.08;
-        if (fp.alpha <= 0) {
-            activeFadePoints.splice(i, 1);
+        v.x += Math.cos(angle) * speed;
+        v.y += Math.sin(angle) * speed;
+
+        v.element.style.left = `${v.x}px`;
+        v.element.style.top = `${v.y}px`;
+
+        let distToCenter = Math.hypot(centerX - v.x, centerY - v.y);
+        if (distToCenter < 50) {
+            v.element.remove();
+            viruses.splice(i, 1);
+            loseLife();
         }
     }
 
