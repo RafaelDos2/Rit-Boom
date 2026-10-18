@@ -33,12 +33,12 @@ let bossY = 0;
 let bossSequence = [];
 let bossCurrentIndex = 0;
 
-// Sistema de Som (Web Audio API) com volume padrão 50
+// Sistema de Som (Web Audio API)
 let audioCtx = null;
 let masterGain = null;
 let musicTimer = null;
 let beatStep = 0;
-let currentVolumeValue = 0.5; // 50 normal equivalente a 50%
+let currentVolumeValue = 0.5;
 const bassNotes = [110, 110, 146.83, 130.81, 98.0, 110, 164.81, 146.83];
 
 function initAudio() {
@@ -63,6 +63,7 @@ function updateVolume(val) {
 
 function toggleVolumeModal() {
     initAudio();
+    stopDrawing();
     if (volumeModal.style.display === 'none') {
         volumeModal.style.display = 'flex';
         startScreen.style.display = 'none';
@@ -70,6 +71,61 @@ function toggleVolumeModal() {
         volumeModal.style.display = 'none';
         startScreen.style.display = 'flex';
     }
+}
+
+function playCountdownSound(isFinal = false) {
+    initAudio();
+    if (!audioCtx || !masterGain) return;
+    let time = audioCtx.currentTime;
+    let osc = audioCtx.createOscillator();
+    let gain = audioCtx.createGain();
+
+    osc.type = isFinal ? 'triangle' : 'sine';
+    osc.frequency.setValueAtTime(isFinal ? 587.33 : 440, time);
+    osc.frequency.exponentialRampToValueAtTime(isFinal ? 880 : 220, time + 0.3);
+
+    gain.gain.setValueAtTime(0.4, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.3);
+
+    osc.connect(gain);
+    gain.connect(masterGain);
+    osc.start(time);
+    osc.stop(time + 0.3);
+}
+
+function playScoreTickSound() {
+    initAudio();
+    if (!audioCtx || !masterGain) return;
+    let time = audioCtx.currentTime;
+    let osc = audioCtx.createOscillator();
+    let gain = audioCtx.createGain();
+
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(300 + Math.random() * 400, time);
+
+    gain.gain.setValueAtTime(0.08, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
+
+    osc.connect(gain);
+    gain.connect(masterGain);
+    osc.start(time);
+    osc.stop(time + 0.05);
+}
+
+function animateFinalScore(targetScore, labelPrefix) {
+    let currentCount = 0;
+    let totalSteps = 40;
+    let stepTime = 40;
+
+    let scoreInterval = setInterval(() => {
+        currentCount += Math.ceil(targetScore / totalSteps) || 1;
+        if (currentCount >= targetScore) {
+            currentCount = targetScore;
+            clearInterval(scoreInterval);
+        }
+        playScoreTickSound();
+        finalRankEl.innerText = `${labelPrefix}: ${currentCount}`;
+    }, stepTime);
 }
 
 function startMusic() {
@@ -104,31 +160,6 @@ function playBeat() {
         gain.connect(masterGain);
         osc.start(time);
         osc.stop(time + 0.12);
-    }
-
-    if (beatStep % 2 !== 0) {
-        let bufferSize = audioCtx.sampleRate * 0.04;
-        let buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-        let data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            data[i] = Math.random() * 2 - 1;
-        }
-
-        let noise = audioCtx.createBufferSource();
-        noise.buffer = buffer;
-
-        let filter = audioCtx.createBiquadFilter();
-        filter.type = 'highpass';
-        filter.frequency.value = 5000;
-
-        let gain = audioCtx.createGain();
-        gain.gain.setValueAtTime(0.25, time);
-        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.04);
-
-        noise.connect(filter);
-        filter.connect(gain);
-        gain.connect(masterGain);
-        noise.start(time);
     }
 
     let noteIndex = Math.floor(beatStep / 2) % bassNotes.length;
@@ -174,20 +205,50 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
+function stopDrawing() {
+    if (drawing) {
+        drawing = false;
+        if (strokePoints.length > 2) {
+            let recognizedTrace = recognizeTraceFlexible(strokePoints);
+            processPlayerDrawing(recognizedTrace);
+            activeFadePoints.push({ points: [...strokePoints], alpha: 1.0 });
+        }
+        strokePoints = [];
+    }
+}
+
+canvas.addEventListener('pointerdown', (e) => {
+    if (!gameActive && !isBossActive) return;
+    drawing = true;
+    strokePoints = [{ x: e.clientX, y: e.clientY }];
+});
+
+window.addEventListener('pointermove', (e) => {
+    if (!drawing || (!gameActive && !isBossActive)) return;
+    strokePoints.push({ x: e.clientX, y: e.clientY });
+});
+
+window.addEventListener('pointerup', stopDrawing);
+window.addEventListener('pointercancel', stopDrawing);
+window.addEventListener('blur', stopDrawing);
+
 const countdownSteps = ["VAMOS", "PREPARADO", "VAI!"];
 
 function startCountdown() {
     initAudio();
+    stopDrawing();
     startScreen.style.display = 'none';
     countdownScreen.style.display = 'flex';
 
     let step = 0;
     countdownText.innerText = countdownSteps[step];
+    playCountdownSound(false);
 
     let countInterval = setInterval(() => {
         step++;
         if (step < countdownSteps.length) {
             countdownText.innerText = countdownSteps[step];
+            playCountdownSound(step === countdownSteps.length - 1);
         } else {
             clearInterval(countInterval);
             countdownScreen.style.display = 'none';
@@ -214,6 +275,8 @@ function initGame() {
     if (heartObj) { heartObj.element.remove(); heartObj = null; }
     viruses = [];
     activeFadePoints = [];
+    strokePoints = [];
+    drawing = false;
 
     startMusic();
     scheduleSpawn();
@@ -360,29 +423,6 @@ function spawnVirus() {
         speedMultiplier: speedMultiplier
     });
 }
-
-canvas.addEventListener('pointerdown', (e) => {
-    if (!gameActive && !isBossActive) return;
-    drawing = true;
-    strokePoints = [{ x: e.clientX, y: e.clientY }];
-});
-
-canvas.addEventListener('pointermove', (e) => {
-    if (!drawing || (!gameActive && !isBossActive)) return;
-    strokePoints.push({ x: e.clientX, y: e.clientY });
-});
-
-canvas.addEventListener('pointerup', () => {
-    if (!drawing || (!gameActive && !isBossActive)) return;
-    drawing = false;
-
-    if (strokePoints.length > 2) {
-        let recognizedTrace = recognizeTraceFlexible(strokePoints);
-        processPlayerDrawing(recognizedTrace);
-        activeFadePoints.push({ points: [...strokePoints], alpha: 1.0 });
-    }
-    strokePoints = [];
-});
 
 function recognizeTraceFlexible(points) {
     let start = points[0];
@@ -577,7 +617,6 @@ function triggerLightningBolt() {
     lightningCharges--;
     updateLightningButton();
     showFeedback("RAIO DISPARADO CONTRA O BOSS! ⚡", "feedback-lightning");
-
     handleBossPhaseClear();
 }
 
@@ -595,27 +634,34 @@ function loseLife() {
 function gameOver() {
     gameActive = false;
     isBossActive = false;
+    stopDrawing();
     stopMusic();
     if (bossEl) { bossEl.remove(); bossEl = null; }
     document.querySelectorAll('.virus, .heart-corner').forEach(v => v.remove());
 
     endTitle.innerText = "FALHA NO SISTEMA!";
     endMessage.innerText = "Você perdeu toda a integridade do núcleo.";
-    finalRankEl.innerText = `Pontuação Final: ${score}`;
     gameoverScreen.style.display = 'flex';
+    finalRankEl.innerText = `Pontuação Final: 0`;
+    animateFinalScore(score, "Pontuação Final");
 }
 
 function winGame() {
     gameActive = false;
     isBossActive = false;
+    stopDrawing();
     stopMusic();
     if (bossEl) { bossEl.remove(); bossEl = null; }
+    document.querySelectorAll('.virus, .heart-corner').forEach(v => v.remove());
 
-    endTitle.innerText = "SISTEMA SALVO!";
-    endMessage.innerText = "Você derrotou o Boss e restaurou a rede cibernética!";
-    finalRankEl.innerText = `Pontuação Máxima: ${score}`;
+    endTitle.innerText = "SISTEMA SALVO! 🎉";
+    endMessage.innerText = "Você derrotou o Boss e restaurou a rede!";
     gameoverScreen.style.display = 'flex';
-    confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+    finalRankEl.innerText = `Pontuação Final: 1000`;
+
+    if (typeof confetti === 'function') {
+        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+    }
 }
 
 function resetGame() {
@@ -625,11 +671,11 @@ function resetGame() {
 
 function triggerCorePulse() {
     core.classList.add('pulse');
-    setTimeout(() => core.classList.remove('pulse'), 100);
+    setTimeout(() => core.classList.remove('pulse'), 150);
 }
 
 function showFeedback(text, className) {
-    let fb = document.createElement('div');
+    const fb = document.createElement('div');
     fb.className = `rhythm-feedback ${className}`;
     fb.innerText = text;
     gameContainer.appendChild(fb);
@@ -638,29 +684,27 @@ function showFeedback(text, className) {
 
 function createParticles(x, y) {
     for (let i = 0; i < 8; i++) {
-        let p = document.createElement('div');
+        const p = document.createElement('div');
         p.className = 'particle';
         p.style.left = `${x}px`;
         p.style.top = `${y}px`;
-
-        let angle = Math.random() * Math.PI * 2;
-        let speed = Math.random() * 6 + 2;
-        let vx = Math.cos(angle) * speed;
-        let vy = Math.sin(angle) * speed;
-
         gameContainer.appendChild(p);
 
+        let angle = Math.random() * Math.PI * 2;
+        let speed = Math.random() * 4 + 2;
+        let vx = Math.cos(angle) * speed;
+        let vy = Math.sin(angle) * speed;
         let alpha = 1.0;
-        let fadeInterval = setInterval(() => {
-            let curX = parseFloat(p.style.left) + vx;
-            let curY = parseFloat(p.style.top) + vy;
-            p.style.left = `${curX}px`;
-            p.style.top = `${curY}px`;
+
+        let anim = setInterval(() => {
+            let curLeft = parseFloat(p.style.left);
+            let curTop = parseFloat(p.style.top);
+            p.style.left = `${curLeft + vx}px`;
+            p.style.top = `${curTop + vy}px`;
             alpha -= 0.05;
             p.style.opacity = alpha;
-
             if (alpha <= 0) {
-                clearInterval(fadeInterval);
+                clearInterval(anim);
                 p.remove();
             }
         }, 20);
@@ -668,72 +712,66 @@ function createParticles(x, y) {
 }
 
 function updateGame() {
-    if (!gameActive) return;
+    if (!gameActive && !isBossActive) return;
 
     let centerX = window.innerWidth / 2;
     let centerY = window.innerHeight / 2;
 
-    if (!isBossActive) {
-        for (let i = viruses.length - 1; i >= 0; i--) {
-            let v = viruses[i];
-            let angle = Math.atan2(centerY - v.y, centerX - v.x);
-            let currentSpeed = baseSpeed * v.speedMultiplier;
+    // Atualiza vírus em direção ao núcleo
+    for (let i = viruses.length - 1; i >= 0; i--) {
+        let v = viruses[i];
+        let dx = centerX - v.x;
+        let dy = centerY - v.y;
+        let dist = Math.hypot(dx, dy);
 
-            v.x += Math.cos(angle) * currentSpeed;
-            v.y += Math.sin(angle) * currentSpeed;
-
+        let currentSpeed = baseSpeed * v.speedMultiplier;
+        if (dist > 55) {
+            v.x += (dx / dist) * currentSpeed;
+            v.y += (dy / dist) * currentSpeed;
             v.element.style.left = `${v.x}px`;
             v.element.style.top = `${v.y}px`;
-
-            let dist = Math.hypot(centerX - v.x, centerY - v.y);
-            if (dist < 50) {
-                v.element.remove();
-                viruses.splice(i, 1);
-                loseLife();
-            }
-        }
-
-        if (heartObj) {
-            let distCore = Math.hypot(centerX - heartObj.x, centerY - heartObj.y);
-            if (distCore < 50) {
-                heartObj.element.remove();
-                heartObj = null;
-            }
+        } else {
+            v.element.remove();
+            viruses.splice(i, 1);
+            loseLife();
         }
     }
 
+    // Desenha as linhas na tela do canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Desenha as linhas tracejadas criadas pelo jogador
-    ctx.lineWidth = 4;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-
-    for (let i = activeFadePoints.length - 1; i >= 0; i--) {
-        let stroke = activeFadePoints[i];
-        ctx.strokeStyle = `rgba(0, 255, 204, ${stroke.alpha})`;
+    if (drawing && strokePoints.length > 1) {
         ctx.beginPath();
-        for (let j = 0; j < stroke.points.length; j++) {
-            let pt = stroke.points[j];
-            if (j === 0) ctx.moveTo(pt.x, pt.y);
-            else ctx.lineTo(pt.x, pt.y);
+        ctx.moveTo(strokePoints[0].x, strokePoints[0].y);
+        for (let i = 1; i < strokePoints.length; i++) {
+            ctx.lineTo(strokePoints[i].x, strokePoints[i].y);
         }
+        ctx.strokeStyle = '#00ffcc';
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#00ffcc';
         ctx.stroke();
-        stroke.alpha -= 0.04;
-        if (stroke.alpha <= 0) {
-            activeFadePoints.splice(i, 1);
-        }
     }
 
-    if (drawing && strokePoints.length > 1) {
-        ctx.strokeStyle = '#00ffcc';
+    for (let i = activeFadePoints.length - 1; i >= 0; i--) {
+        let fp = activeFadePoints[i];
         ctx.beginPath();
-        for (let j = 0; j < strokePoints.length; j++) {
-            let pt = strokePoints[j];
-            if (j === 0) ctx.moveTo(pt.x, pt.y);
-            else ctx.lineTo(pt.x, pt.y);
+        ctx.moveTo(fp.points[0].x, fp.points[0].y);
+        for (let j = 1; j < fp.points.length; j++) {
+            ctx.lineTo(fp.points[j].x, fp.points[j].y);
         }
+        ctx.strokeStyle = `rgba(0, 255, 204, ${fp.alpha})`;
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = `rgba(0, 255, 204, ${fp.alpha})`;
         ctx.stroke();
+
+        fp.alpha -= 0.08;
+        if (fp.alpha <= 0) {
+            activeFadePoints.splice(i, 1);
+        }
     }
 
     gameLoopInterval = requestAnimationFrame(updateGame);
