@@ -13,6 +13,7 @@ body {
     font-family: 'Courier New', Courier, monospace;
     overflow: hidden;
     height: 100vh;
+    width: 100vw;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -22,6 +23,8 @@ body {
     position: relative;
     width: 100vw;
     height: 100vh;
+    max-width: 100%;
+    max-height: 100%;
     background: radial-gradient(circle at center, #0a192f 0%, #02060b 100%);
     overflow: hidden;
 }
@@ -42,8 +45,8 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 90px;
-    height: 90px;
+    width: clamp(70px, 12vw, 90px);
+    height: clamp(70px, 12vw, 90px);
     background: #00ffcc;
     border-radius: 50%;
     display: flex;
@@ -66,14 +69,14 @@ body {
 }
 
 #core-inner {
-    width: 60px;
-    height: 60px;
+    width: clamp(45px, 8vw, 60px);
+    height: clamp(45px, 8vw, 60px);
     background: #02060b;
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 24px;
+    font-size: clamp(18px, 4vw, 24px);
 }
 
 @keyframes shake {
@@ -107,17 +110,18 @@ body {
     top: 36%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 26px;
+    font-size: clamp(20px, 5vw, 26px);
     font-weight: bold;
     z-index: 25;
     pointer-events: none;
     animation: float-up 0.6s ease-out forwards;
     text-shadow: 0 0 10px currentColor;
+    white-space: nowrap;
 }
 
 .feedback-perfect {
     color: #00ffcc;
-    font-size: 32px;
+    font-size: clamp(24px, 6vw, 32px);
 }
 
 .feedback-good {
@@ -130,22 +134,22 @@ body {
 
 .feedback-bomb {
     color: #ff00ff;
-    font-size: 32px;
+    font-size: clamp(24px, 6vw, 32px);
 }
 
 .feedback-ghost {
     color: #b19cd9;
-    font-size: 34px;
+    font-size: clamp(26px, 6.5vw, 34px);
 }
 
 .feedback-boss {
     color: #ffcc00;
-    font-size: 34px;
+    font-size: clamp(26px, 6.5vw, 34px);
 }
 
 .feedback-lightning {
     color: #00ffff;
-    font-size: 34px;
+    font-size: clamp(26px, 6.5vw, 34px);
     text-shadow: 0 0 15px #00ffff;
 }
 
@@ -163,32 +167,33 @@ body {
 
 #hud-top {
     position: absolute;
-    top: 20px;
+    top: 15px;
     left: 0;
     width: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 20px;
-    font-size: 22px;
+    gap: 15px;
+    font-size: clamp(14px, 4vw, 22px);
     font-weight: bold;
     z-index: 20;
     text-shadow: 0 0 12px rgba(0, 255, 204, 0.6);
     pointer-events: none;
-    letter-spacing: 2px;
+    letter-spacing: 1px;
+    padding: 0 10px;
 }
 
 #hud-top span {
     color: #ffffff;
-    margin-left: 10px;
+    margin-left: 5px;
 }
 
 #lightning-btn {
     background: rgba(0, 255, 255, 0.2);
     border: 2px solid #00ffff;
     color: #00ffff;
-    padding: 6px 14px;
-    font-size: 14px;
+    padding: 4px 10px;
+    font-size: clamp(11px, 3vw, 14px);
     font-family: inherit;
     font-weight: bold;
     cursor: pointer;
@@ -200,7 +205,7 @@ body {
 
 #hud-bottom {
     position: absolute;
-    bottom: 20px;
+    bottom: 15px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
@@ -208,23 +213,28 @@ body {
     align-items: center;
     z-index: 20;
     pointer-events: none;
+    width: 100%;
+    padding: 0 10px;
 }
 
 .life-label {
-    font-size: 11px;
-    margin-bottom: 6px;
+    font-size: clamp(9px, 2.5vw, 11px);
+    margin-bottom: 5px;
     color: #a0aec0;
     letter-spacing: 1px;
+    text-align: center;
 }
 
 #health-bar-container {
     display: flex;
-    gap: 6px;
+    gap: 5px;
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 .life-block {
-    width: 32px;
-    height: 12px;
+    width: clamp(24px, 6vw, 32px);
+    height: clamp(10px, 2.5vw, 12px);
     background-color: #00ffcc;
     border-radius: 3px;
     box-shadow: 0 0 8px #00ffcc;
@@ -237,11 +247,10 @@ body {
     border: 1px solid #2d3748;
 }
 
-/* Cartas e Inimigos ampliados para melhor visualização */
 .virus {
     position: absolute;
-    width: 86px;
-    height: 86px;
+    width: clamp(70px, 14vw, 86px);
+    height: clamp(70px, 14vw, 86px);
     border-radius: 50%;
     display: flex;
     flex-direction: column;
@@ -249,7 +258,7 @@ body {
     align-items: center;
     z-index: 15;
     transform: translate(-50%, -50%);
-    font-size: 19px;
+    font-size: clamp(14px, 3vw, 19px);
     font-weight: bold;
     color: #ffffff;
     text-shadow: 0 0 6px #000;
@@ -271,45 +280,44 @@ body {
 .virus-bomb {
     background: #ff00ff;
     box-shadow: 0 0 25px #ff00ff;
-    width: 102px;
-    height: 102px;
-    font-size: 16px;
+    width: clamp(80px, 16vw, 102px);
+    height: clamp(80px, 16vw, 102px);
+    font-size: clamp(12px, 2.5vw, 16px);
 }
 
 .virus-double {
     background: #ffaa00;
     box-shadow: 0 0 20px #ffaa00;
-    width: 96px;
-    height: 96px;
-    font-size: 15px;
+    width: clamp(75px, 15vw, 96px);
+    height: clamp(75px, 15vw, 96px);
+    font-size: clamp(12px, 2.5vw, 15px);
 }
 
 .virus-ghost {
     background: #b19cd9;
     box-shadow: 0 0 25px #b19cd9;
-    width: 102px;
-    height: 102px;
-    font-size: 14px;
+    width: clamp(80px, 16vw, 102px);
+    height: clamp(80px, 16vw, 102px);
+    font-size: clamp(11px, 2.3vw, 14px);
     color: #02060b;
     border-color: #fff;
 }
 
 .heart-corner {
     position: absolute;
-    font-size: 24px;
-    padding: 10px;
+    font-size: clamp(20px, 4vw, 24px);
+    padding: 8px;
     background: rgba(255, 0, 85, 0.2);
     border: 2px solid #ff0055;
     border-radius: 50%;
     transform: translate(-50%, -50%);
     z-index: 16;
-    animation: pulse-boss 0.8s infinite alternate;
 }
 
 .boss {
     position: absolute;
-    width: 140px;
-    height: 140px;
+    width: clamp(110px, 22vw, 140px);
+    height: clamp(110px, 22vw, 140px);
     border-radius: 50%;
     background: radial-gradient(circle, #ff0055 0%, #330011 100%);
     box-shadow: 0 0 50px #ff0055, inset 0 0 25px #ffffff;
@@ -319,12 +327,12 @@ body {
     align-items: center;
     z-index: 18;
     transform: translate(-50%, -50%);
-    font-size: 11px;
+    font-size: clamp(9px, 2vw, 11px);
     font-weight: bold;
     color: #fff;
     text-align: center;
     border: 4px solid #ffcc00;
-    padding: 10px;
+    padding: 8px;
 }
 
 .overlay {
@@ -340,50 +348,53 @@ body {
     align-items: center;
     z-index: 50;
     text-align: center;
-    padding: 20px;
+    padding: 15px;
+    overflow-y: auto;
 }
 
 #countdown-text {
-    font-size: 54px;
+    font-size: clamp(40px, 10vw, 54px);
     font-weight: bold;
     color: #ffcc00;
     text-shadow: 0 0 20px #ffcc00;
 }
 
 h1 {
-    font-size: 32px;
-    margin-bottom: 15px;
+    font-size: clamp(24px, 6vw, 32px);
+    margin-bottom: 10px;
     color: #00ffcc;
     text-shadow: 0 0 15px #00ffcc;
 }
 
 p {
-    font-size: 14px;
+    font-size: clamp(12px, 3.2vw, 14px);
     color: #a0aec0;
-    margin-bottom: 25px;
-    line-height: 1.5;
+    margin-bottom: 20px;
+    line-height: 1.4;
     max-width: 500px;
 }
 
 .menu-buttons {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 12px;
     align-items: center;
+    width: 100%;
 }
 
 .btn {
     background: transparent;
     border: 2px solid #00ffcc;
     color: #00ffcc;
-    padding: 12px 35px;
-    font-size: 18px;
+    padding: 10px 30px;
+    font-size: clamp(15px, 4vw, 18px);
     font-family: inherit;
     font-weight: bold;
     cursor: pointer;
     border-radius: 4px;
     box-shadow: 0 0 10px rgba(0, 255, 204, 0.3);
     transition: 0.2s;
+    width: min(250px, 80vw);
 }
 
 .btn:hover {
@@ -407,11 +418,11 @@ p {
 .volume-control-box {
     display: flex;
     align-items: center;
-    gap: 15px;
-    font-size: 24px;
+    gap: 12px;
+    font-size: clamp(18px, 5vw, 24px);
     color: #ffffff;
     background: rgba(0, 255, 204, 0.05);
-    padding: 15px 25px;
+    padding: 12px 20px;
     border-radius: 8px;
     border: 1px solid rgba(0, 255, 204, 0.3);
 }
@@ -419,7 +430,7 @@ p {
 input[type=range] {
     accent-color: #00ffcc;
     cursor: pointer;
-    width: 200px;
+    width: clamp(140px, 40vw, 200px);
 }
 
 .particle {
