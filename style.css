@@ -415,6 +415,16 @@ p {
     box-shadow: 0 0 20px #00aaff;
 }
 
+/* Estilo para a marca Senac posicionada abaixo do botão Ajustar Volume */
+.senac-brand {
+    font-size: clamp(18px, 4.5vw, 22px);
+    font-weight: bold;
+    color: #00aaff;
+    letter-spacing: 2px;
+    margin-top: 8px;
+    text-shadow: 0 0 10px rgba(0, 170, 255, 0.5);
+}
+
 .volume-control-box {
     display: flex;
     align-items: center;
