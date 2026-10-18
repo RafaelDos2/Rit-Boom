@@ -11,7 +11,6 @@
 </head>
 
 <body>
-
     <div id="game-container">
         <canvas id="drawing-canvas"></canvas>
 
@@ -46,8 +45,6 @@
                 💣 <b>Bombas:</b> Acumulam cargas para o <b>Botão de Raio (⚡)</b> contra o Boss!<br>
                 🏆 <b>Chegue a 1000 pontos</b> para enfrentar o <u>Boss Final!</u>
             </p>
-
-            <!-- Botões Principais: Jogar e Ajustar Volume -->
             <div class="menu-buttons">
                 <button class="btn" onclick="startCountdown()">JOGAR</button>
                 <button class="btn btn-secondary" onclick="toggleVolumeModal()">AJUSTAR VOLUME</button>
@@ -75,9 +72,10 @@
         <div id="gameover-screen" class="overlay" style="display: none;">
             <h1 id="end-title">FALHA NO SISTEMA!</h1>
             <p><span id="end-message">Você perdeu toda a integridade.</span><br><br>
-                <span id="final-rank" style="font-size: 20px; color: #ffcc00; font-weight: bold;"></span>
+                <span id="final-rank"
+                    style="font-size: clamp(16px, 4vw, 20px); color: #ffcc00; font-weight: bold;"></span>
             </p>
-            <button class="btn" onclick="resetGame()">JOGAR NOVAMENTE</button>
+            <button class="btn" onclick="resetGame()">VOLTAR AO INÍCIO</button>
         </div>
     </div>
 
